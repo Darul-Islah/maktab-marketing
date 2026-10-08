@@ -34,4 +34,4 @@ The user supplied the emerald Maktab logo and Stitch HTML/design references. Pro
 
 The original designer mockup was reworked for readable product evidence, working anchor navigation, accessible tabs/dialogs/FAQs, responsive layouts, dark mode, and accurate product claims. Demo screenshots are explicitly labeled.
 
-App source reference: frontend `fa8957b73f77ca51780e9e3704fe914aa1d0d7dd` with local working changes. This site does not alter the application or depend on its availability.
+App source reference: frontend `a939d28d3ce65eaa436bc81e8d16db01c254e4df` with local working changes (refreshed look and logo, captured 2026-10-08 with the React Query devtools button hidden). This site does not alter the application or depend on its availability.
