@@ -30,6 +30,7 @@ html[data-theme=dark]{color-scheme:dark;--bg:#1a211c;--surface:#232c25;--ink:#f1
   h2,.payments-heading h2,.faq-intro h2{font-size:32px;line-height:1.16}
   .details-heading h2{font-size:34px}
   .product-tabs button{font-size:12px;justify-content:center;padding:14px 4px;min-height:48px}
+  .product-tabs .arrow-icon{display:none}
   .product-copy h3{font-size:27px;line-height:1.2}
   .product-copy .check-list{font-size:13px;margin:16px 0}
   .product-copy .text-link{min-height:44px;font-size:13px}
