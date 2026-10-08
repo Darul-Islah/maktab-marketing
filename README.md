@@ -6,7 +6,13 @@ A standalone, single-page website for Islamic school administrators. Plain HTML,
 
 From this directory, run `node preview.cjs` and open http://127.0.0.1:4175.
 
-## Deploy to Render
+## GitHub Pages
+
+The public website is hosted at https://darul-islah.github.io/maktab-marketing/. GitHub Pages publishes the root of the `gh-pages` branch, which contains only `public` assets.
+
+After changing the website, commit the changes on `main`, run `git subtree split --prefix=public -b pages-update`, then `git push origin pages-update:gh-pages` and `git branch -D pages-update`. GitHub rebuilds the site automatically. Asset URLs are relative so the project URL works correctly.
+
+## Optional Render deployment
 
 Create a Static Site from this repository, branch `main`, build command `echo "Static site ready"`, publish directory `public`. Render provides the independent HTTPS URL. No environment variables are required.
 
@@ -16,7 +22,7 @@ Alternatively, use the included `render.yaml` Blueprint in the Luminary AI Solut
 
 Site revision `501dcd52960a4b10333cb241da5d73210ef908dd` passed local Chromium checks for tabs and keyboard navigation, FAQ disclosures, image and privacy dialogs, Escape dismissal, email draft feedback, theme switching, mobile navigation, image loading, and internal anchors. No JavaScript or HTTP errors were observed. Layout checks passed at widths 320, 390, 768, 1024, and 1440 pixels. Axe-core WCAG 2 A/AA and 2.1 AA checks reported zero violations in light and dark themes. JavaScript syntax and Git whitespace checks passed.
 
-Deployment has not yet been verified: both Render create-site tools returned HTTP 500 and no new service appeared. Existing services in the selected workspace report a billing suspension. The dashboard requires an authenticated browser session to investigate further.
+The same browser interaction and responsive checks passed after adapting assets for GitHub Pages. Render deployment was superseded by the user's request to host on GitHub.
 
 ## Contact
 
