@@ -17,9 +17,10 @@ function selectTab(tab, focus = false) { for (const item of tabs) { const select
 tabs.forEach((tab, index) => { tab.addEventListener('click', () => selectTab(tab)); tab.addEventListener('keydown', event => { let target; if (event.key === 'ArrowRight') target = (index + 1) % tabs.length; if (event.key === 'ArrowLeft') target = (index + tabs.length - 1) % tabs.length; if (event.key === 'Home') target = 0; if (event.key === 'End') target = tabs.length - 1; if (target !== undefined) { event.preventDefault(); selectTab(tabs[target], true); } }); });
 const imageDialog = document.getElementById('image-dialog');
 document.querySelectorAll('[data-image]').forEach(button => button.addEventListener('click', () => { const image = document.getElementById('dialog-image'); image.src = button.dataset.image; image.alt = button.dataset.caption; document.getElementById('dialog-caption').textContent = button.dataset.caption; imageDialog.showModal(); }));
-document.querySelector('[data-open-privacy]').addEventListener('click', () => document.getElementById('privacy-dialog').showModal());
+document.querySelector('[data-open-privacy]')?.addEventListener('click', () => document.getElementById('privacy-dialog').showModal());
 document.querySelectorAll('dialog').forEach(dialog => { dialog.querySelector('.dialog-close').addEventListener('click', () => dialog.close()); dialog.addEventListener('click', event => { if (event.target === dialog) { const rect = dialog.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close(); } }); });
-document.getElementById('interest-form').addEventListener('submit', event => {
+const interestForm = document.getElementById('interest-form');
+if (interestForm) interestForm.addEventListener('submit', event => {
   event.preventDefault();
   const form = event.currentTarget;
   if (!form.reportValidity()) return;
@@ -33,4 +34,10 @@ document.getElementById('interest-form').addEventListener('submit', event => {
   window.location.href = `mailto:abdullah.siddiki@darulislah.org?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   document.getElementById('form-status').textContent = 'Your email draft is ready to open. If your email app did not open, email abdullah.siddiki@darulislah.org directly. Your message has not been sent yet.';
 });
-document.getElementById('year').textContent = new Date().getFullYear();
+const year = document.getElementById('year');
+if (year) year.textContent = new Date().getFullYear();
+const reveals = document.querySelectorAll('.reveal');
+if ('IntersectionObserver' in window && reveals.length) {
+  const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('is-visible'); observer.unobserve(entry.target); } }), { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+  reveals.forEach(el => observer.observe(el));
+} else reveals.forEach(el => el.classList.add('is-visible'));

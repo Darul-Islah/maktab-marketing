@@ -6,17 +6,20 @@ A standalone, single-page website for Islamic school administrators. Plain HTML,
 
 From this directory, run `node preview.cjs` and open http://127.0.0.1:4175.
 
-## GitHub Pages
+## Hosting
 
-The public website is hosted at https://darul-islah.github.io/maktab-marketing/. GitHub Pages publishes the root of the `gh-pages` branch, which contains only `public` assets.
+The website is served by Cloudflare Workers static assets at https://maktab-marketing.luminarysolutions.ai (configured in `wrangler.jsonc`; `/features` serves `features.html`, unknown paths get `404.html`). Deploy from this directory after `npx wrangler@4.140.0 login`:
 
-After changing the website, commit the changes on `main`, run `git subtree split --prefix=public -b pages-update`, then `git push origin pages-update:gh-pages` and `git branch -D pages-update`. GitHub rebuilds the site automatically. Asset URLs are relative so the project URL works correctly.
+```bash
+npx wrangler@4.140.0 deploy
+```
 
-## Optional Render deployment
+The custom domain is attached by the `routes` entry on deploy. `public/_headers` sets security and cache headers. The old GitHub Pages copy at https://darul-islah.github.io/maktab-marketing/ is superseded.
 
-Create a Static Site from this repository, branch `main`, build command `echo "Static site ready"`, publish directory `public`. Render provides the independent HTTPS URL. No environment variables are required.
+## Pages
 
-Alternatively, use the included `render.yaml` Blueprint in the Luminary AI Solutions workspace. Keep this repository private and grant Render access to this repository if prompted.
+- `index.html`: the landing page.
+- `features.html`: every feature area with real staging screens (captured 2026-10-12, demo school data), each claim checked against the marketing briefs in the Maktab repository (`docs/marketing/01`–`09`).
 
 ## Validation
 
