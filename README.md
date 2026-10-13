@@ -24,20 +24,21 @@ The custom domain is attached by the `routes` entry on deploy, and `public/_head
 
 ## Forms and email
 
-`POST /api/contact` (home page) and `POST /api/waitlist` take JSON, are rate limited to 5 a minute per visitor, ignore bots (a hidden field and a minimum time on the page), store every submission in the D1 database `maktab-marketing-forms` (table `submissions`, `migrations/`) and email it to `CONTACT_TO` with the visitor as Reply-To, using the Cloudflare Email Service binding.
+`POST /api/contact` (home page) and `POST /api/waitlist` take JSON, are rate limited to 5 a minute per visitor, ignore bots (a hidden field and a minimum time on the page), store every submission in the D1 database `maktab-marketing-forms` (table `submissions`, `migrations/`) and email it to `CONTACT_TO` with the visitor as Reply-To.
 
-Email needs two one-time steps in the Cloudflare dashboard (Wrangler's login is not allowed to do the first):
+Email goes through [Resend](https://resend.com) on its free plan, from `forms@maktab-staging.luminarysolutions.ai`, the domain already verified in the Resend account staging uses (the free plan allows one domain). The Worker needs one secret, a Resend API key with sending access:
 
-1. **Compute & AI → Email Service → Email Sending → Onboard domain → luminarysolutions.ai.** This adds records under `cf-bounce.luminarysolutions.ai` only; the Google Workspace MX records stay as they are.
-2. **Verify the destination.** Cloudflare sent a verification link to `abdullah.siddiki@darulislah.org` (Email Routing destination address); click it. Sending to your own verified address is free on every plan.
+```bash
+npx wrangler@4.140.0 secret put RESEND_API_KEY
+```
 
-To change the inbox, set `CONTACT_TO` and `allowed_destination_addresses` in `wrangler.jsonc`, add and verify the new address (`npx wrangler@4.140.0 email routing addresses create you@example.com`), and deploy. Read stored submissions with:
+Without the key, submissions are still stored and the form still thanks the visitor; the failed send is logged. To change the inbox, edit `CONTACT_TO` in `wrangler.jsonc` and deploy. Read stored submissions with:
 
 ```bash
 npx wrangler@4.140.0 d1 execute maktab-marketing-forms --remote --command "SELECT created_at, kind, name, email, school FROM submissions ORDER BY id DESC LIMIT 50"
 ```
 
-Local testing: `npx wrangler@4.140.0 d1 migrations apply maktab-marketing-forms --local`, then `npx wrangler@4.140.0 dev`. Locally, emails are simulated and written under `.wrangler/tmp/email/`.
+Local testing: `npx wrangler@4.140.0 d1 migrations apply maktab-marketing-forms --local`, put `RESEND_API_KEY=...` in `.dev.vars` (git-ignored), then `npx wrangler@4.140.0 dev`. Local sends are real if the key is real.
 
 ## Validation
 

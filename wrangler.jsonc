@@ -19,15 +19,12 @@
   "workers_dev": true,
   "preview_urls": true,
   "vars": {
-    // where form submissions are emailed; it must be a verified address in Cloudflare Email Routing
-    // (Email Routing > Destination addresses), which makes these sends free on every plan
+    // where form submissions are emailed
     "CONTACT_TO": "abdullah.siddiki@darulislah.org",
-    // sender; the domain must be onboarded to Cloudflare Email Sending (records go under cf-bounce)
-    "MAIL_FROM": "forms@luminarysolutions.ai"
+    // sender; this domain is already verified in the Resend account staging uses (free plan: one domain)
+    "MAIL_FROM": "forms@maktab-staging.luminarysolutions.ai"
   },
-  "send_email": [
-    { "name": "EMAIL", "allowed_destination_addresses": ["abdullah.siddiki@darulislah.org"] }
-  ],
+  // secret (not in this file): RESEND_API_KEY, set with `npx wrangler@4.140.0 secret put RESEND_API_KEY`
   // every submission is kept here too, so nothing is lost if an email fails
   "d1_databases": [
     { "binding": "DB", "database_name": "maktab-marketing-forms", "database_id": "04a2991c-157a-4658-b3c3-7b2ddb20492d", "migrations_dir": "migrations" }

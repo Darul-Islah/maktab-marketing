@@ -1,8 +1,8 @@
 // Maktab marketing site Worker. Pages and files are static assets; this only handles the two forms:
 //   POST /api/contact   "I'm interested" form on the home page
 //   POST /api/waitlist  waitlist survey (waitlist.html)
-// Each submission is validated, rate limited, stored in D1 and emailed to CONTACT_TO through the
-// Cloudflare Email Service binding. Replies go straight to the visitor (Reply-To).
+// Each submission is validated, rate limited, stored in D1 and emailed to CONTACT_TO through Resend
+// (free plan; secret RESEND_API_KEY). Replies go straight to the visitor (Reply-To).
 
 const MAX = { name: 100, email: 200, school: 160, text: 1500, other: 300 };
 
@@ -87,17 +87,10 @@ async function handleForm(kind, request, env) {
 
   let emailed = false;
   try {
-    await env.EMAIL.send({
-      to: env.CONTACT_TO,
-      from: { email: env.MAIL_FROM, name: 'Maktab website' },
-      replyTo: { email: data.email, name: data.name },
-      subject,
-      text,
-      html,
-    });
+    await sendMail(env, { replyTo: data.email, subject, text, html });
     emailed = true;
   } catch (error) {
-    console.error('email send failed', error && error.code ? error.code : '', String(error));
+    console.error('email send failed', String(error));
   }
 
   if (!emailed && !stored) {
@@ -182,6 +175,17 @@ function waitlistEmail(d) {
     ['Software they use now', d.tools], ['Other software', d.toolsOther], ['Looking to switch', d.timeline], ['Anything else', d.notes],
   ]);
   return { subject: `Waitlist: ${d.school} (${d.name})`, text: `New waitlist signup from the Maktab website\n\n${r.text}\n`, html: wrap('New waitlist signup', r.html) };
+}
+
+// Resend REST API: https://resend.com/docs/api-reference/emails/send-email
+async function sendMail(env, { replyTo, subject, text, html }) {
+  if (!env.RESEND_API_KEY) throw new Error('RESEND_API_KEY is not set');
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from: `Maktab website <${env.MAIL_FROM}>`, to: [env.CONTACT_TO], reply_to: replyTo, subject, text, html }),
+  });
+  if (!response.ok) throw new Error(`Resend ${response.status}: ${(await response.text()).slice(0, 300)}`);
 }
 
 function json(data, status = 200, headers = {}) {
