@@ -17,22 +17,47 @@ function selectTab(tab, focus = false) { for (const item of tabs) { const select
 tabs.forEach((tab, index) => { tab.addEventListener('click', () => selectTab(tab)); tab.addEventListener('keydown', event => { let target; if (event.key === 'ArrowRight') target = (index + 1) % tabs.length; if (event.key === 'ArrowLeft') target = (index + tabs.length - 1) % tabs.length; if (event.key === 'Home') target = 0; if (event.key === 'End') target = tabs.length - 1; if (target !== undefined) { event.preventDefault(); selectTab(tabs[target], true); } }); });
 const imageDialog = document.getElementById('image-dialog');
 document.querySelectorAll('[data-image]').forEach(button => button.addEventListener('click', () => { const image = document.getElementById('dialog-image'); image.src = button.dataset.image; image.alt = button.dataset.caption; document.getElementById('dialog-caption').textContent = button.dataset.caption; imageDialog.showModal(); }));
-document.querySelector('[data-open-privacy]')?.addEventListener('click', () => document.getElementById('privacy-dialog').showModal());
+document.querySelectorAll('[data-open-privacy]').forEach(button => button.addEventListener('click', () => document.getElementById('privacy-dialog').showModal()));
 document.querySelectorAll('dialog').forEach(dialog => { dialog.querySelector('.dialog-close').addEventListener('click', () => dialog.close()); dialog.addEventListener('click', event => { if (event.target === dialog) { const rect = dialog.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close(); } }); });
-const interestForm = document.getElementById('interest-form');
-if (interestForm) interestForm.addEventListener('submit', event => {
-  event.preventDefault();
-  const form = event.currentTarget;
-  if (!form.reportValidity()) return;
-  const data = new FormData(form);
-  const name = String(data.get('name') || '').trim();
-  if (!name) { const input = form.elements.namedItem('name'); input.setCustomValidity('Please enter your name.'); input.reportValidity(); input.addEventListener('input', () => input.setCustomValidity(''), { once: true }); return; }
-  const school = String(data.get('school') || '').trim();
-  const message = String(data.get('message') || '').trim();
-  const subject = `Interested in Maktab${school ? ` - ${school}` : ''}`;
-  const body = `Assalamu alaikum,\n\nI'm interested in learning more about Maktab.\n\nName: ${name}\n${school ? `School: ${school}\n` : ''}${message ? `\nWhat we'd like to make easier:\n${message}\n` : ''}\nPlease reach out to me at this email address.\n\nThank you,\n${name}`;
-  window.location.href = `mailto:abdullah.siddiki@darulislah.org?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  document.getElementById('form-status').textContent = 'Your email draft is ready to open. If your email app did not open, email abdullah.siddiki@darulislah.org directly. Your message has not been sent yet.';
+// Forms post JSON to the site's Worker (/api/contact, /api/waitlist), which emails the team.
+const CONTACT = 'abdullah.siddiki@darulislah.org';
+const pageStarted = Date.now();
+document.querySelectorAll('form[data-endpoint]').forEach(form => {
+  const status = form.querySelector('.form-status');
+  const button = form.querySelector('button[type=submit]');
+  const say = (message, isError) => { status.textContent = message; status.classList.toggle('is-error', !!isError); };
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    for (const field of form.querySelectorAll('[required]')) field.setCustomValidity('');
+    const email = form.elements.namedItem('email');
+    if (email && email.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.value.trim())) email.setCustomValidity('Please enter a valid email address.');
+    for (const field of form.querySelectorAll('[required]')) if (!field.value.trim()) field.setCustomValidity('Please fill in this field.');
+    if (!form.reportValidity()) return;
+    const data = { started: pageStarted };
+    const fd = new FormData(form);
+    for (const key of new Set(fd.keys())) {
+      const values = fd.getAll(key).map(v => String(v).trim());
+      data[key] = form.querySelectorAll(`[name="${key}"][type=checkbox]`).length ? values : values[0];
+    }
+    button.disabled = true;
+    say('Sending...');
+    try {
+      const response = await fetch(form.dataset.endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.ok) {
+        const field = result.field && form.elements.namedItem(result.field);
+        if (field) { field.setCustomValidity(result.error); field.reportValidity(); field.addEventListener('input', () => field.setCustomValidity(''), { once: true }); }
+        throw new Error(result.error || 'Request failed');
+      }
+      const done = form.dataset.done && document.querySelector(form.dataset.done);
+      form.hidden = true;
+      if (done) { done.hidden = false; done.focus(); done.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    } catch (error) {
+      button.disabled = false;
+      say(`${error.message && error.message !== 'Request failed' && error.message !== 'Failed to fetch' ? error.message + ' ' : ''}If it keeps happening, email us at ${CONTACT}.`, true);
+    }
+  });
+  form.querySelectorAll('input,textarea,select').forEach(field => field.addEventListener('input', () => field.setCustomValidity('')));
 });
 const year = document.getElementById('year');
 if (year) year.textContent = new Date().getFullYear();
