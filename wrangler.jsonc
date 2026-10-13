@@ -1,0 +1,37 @@
+{
+  // Maktab marketing site: static pages plus two form endpoints (/api/contact, /api/waitlist).
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "maktab-marketing",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-23",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    // only the API runs the Worker; every page and file is served straight from the assets
+    "run_worker_first": ["/api/*"],
+    // /features serves features.html; unknown paths get 404.html with a 404 status
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  "routes": [
+    { "pattern": "maktab-marketing.luminarysolutions.ai", "custom_domain": true }
+  ],
+  "workers_dev": true,
+  "preview_urls": true,
+  "vars": {
+    // where form submissions are emailed
+    "CONTACT_TO": "abdullah.siddiki@darulislah.org",
+    // sender; this domain is already verified in the Resend account staging uses (free plan: one domain)
+    "MAIL_FROM": "forms@maktab-staging.luminarysolutions.ai"
+  },
+  // secret (not in this file): RESEND_API_KEY, set with `npx wrangler@4.140.0 secret put RESEND_API_KEY`
+  // every submission is kept here too, so nothing is lost if an email fails
+  "d1_databases": [
+    { "binding": "DB", "database_name": "maktab-marketing-forms", "database_id": "04a2991c-157a-4658-b3c3-7b2ddb20492d", "migrations_dir": "migrations" }
+  ],
+  // at most 5 submissions per visitor per minute
+  "ratelimits": [
+    { "name": "FORM_LIMIT", "namespace_id": "4171", "simple": { "limit": 5, "period": 60 } }
+  ],
+  "observability": { "enabled": true }
+}
