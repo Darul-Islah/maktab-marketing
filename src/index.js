@@ -42,9 +42,44 @@ export default {
         return json({ ok: false, error: 'Something went wrong on our side.' }, 500);
       }
     }
+    if (url.pathname.startsWith('/assets/video/')) return serveVideo(request, env);
     return env.ASSETS.fetch(request);
   },
 };
+
+// Static assets answer a Range request with the whole file (200). Safari will not play a video
+// without byte ranges (206), so video files come through here and are sliced to the request.
+async function serveVideo(request, env) {
+  if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
+  const asset = await env.ASSETS.fetch(new Request(request.url, { method: 'GET' }));
+  if (!asset.ok) return asset;
+  const headers = new Headers(asset.headers);
+  headers.set('Accept-Ranges', 'bytes');
+  const range = request.headers.get('Range');
+  const match = range && /^bytes=(\d*)-(\d*)$/.exec(range.trim());
+  if (!match) {
+    return new Response(request.method === 'HEAD' ? null : asset.body, { status: 200, headers });
+  }
+  const body = await asset.arrayBuffer();
+  const size = body.byteLength;
+  let start, end;
+  if (match[1] === '') {
+    const suffix = Number(match[2]); // bytes=-N: the last N bytes
+    start = Math.max(0, size - suffix);
+    end = size - 1;
+  } else {
+    start = Number(match[1]);
+    end = match[2] === '' ? size - 1 : Math.min(Number(match[2]), size - 1);
+  }
+  if (!Number.isFinite(start) || start >= size || end < start) {
+    headers.set('Content-Range', `bytes */${size}`);
+    headers.delete('Content-Length');
+    return new Response(null, { status: 416, headers });
+  }
+  headers.set('Content-Range', `bytes ${start}-${end}/${size}`);
+  headers.set('Content-Length', String(end - start + 1));
+  return new Response(request.method === 'HEAD' ? null : body.slice(start, end + 1), { status: 206, headers });
+}
 
 async function handleForm(kind, request, env) {
   const origin = request.headers.get('Origin');

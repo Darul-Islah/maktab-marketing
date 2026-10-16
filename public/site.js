@@ -66,3 +66,19 @@ if ('IntersectionObserver' in window && reveals.length) {
   const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('is-visible'); observer.unobserve(entry.target); } }), { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
   reveals.forEach(el => observer.observe(el));
 } else reveals.forEach(el => el.classList.add('is-visible'));
+
+// Tour video: loads nothing until someone asks to play it (preload="none").
+const tourVideo = document.getElementById('tour-video');
+if (tourVideo) {
+  const player = tourVideo.closest('.tour-player');
+  const playTour = () => { tourVideo.play().catch(() => {}); };
+  player.querySelector('.tour-play').addEventListener('click', playTour);
+  // native controls only once it plays, so the poster stays clean
+  tourVideo.addEventListener('play', () => { player.classList.add('is-playing'); tourVideo.controls = true; });
+  tourVideo.addEventListener('ended', () => player.classList.remove('is-playing'));
+  document.querySelectorAll('[data-play-tour]').forEach(link => link.addEventListener('click', event => {
+    event.preventDefault();
+    document.getElementById('tour').scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    playTour();
+  }));
+}
